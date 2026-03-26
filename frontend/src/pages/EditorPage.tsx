@@ -13,7 +13,7 @@ import {
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import {
   ArrowLeft, Save, Download, Settings, Layers, Square, Type, Image, Monitor, MessageSquare, Bell,
-  Trash2, Copy, Eye, EyeOff, Wand2, LayoutTemplate, ChevronUp, ChevronDown, Palette, Sparkles, FileJson,
+  Trash2, Copy, Eye, EyeOff, LayoutTemplate, ChevronUp, ChevronDown, Palette, Sparkles, FileJson,
 } from 'lucide-react'
 import html2canvas from 'html2canvas'
 import { api } from '../utils/api'
