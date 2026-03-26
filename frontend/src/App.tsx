@@ -3,6 +3,7 @@ import { useAuthStore } from './stores/authStore'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
+import ProjectDetailPage from './pages/ProjectDetailPage'
 import EditorPage from './pages/EditorPage'
 import { useEffect } from 'react'
 
@@ -20,6 +21,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={token ? <DashboardPage /> : <LoginPage />} />
         <Route path="/dashboard" element={token ? <DashboardPage /> : <LoginPage />} />
+        <Route path="/projects/:projectId" element={token ? <ProjectDetailPage /> : <LoginPage />} />
         <Route path="/projects/:projectId/scenes/:sceneId" element={token ? <EditorPage /> : <LoginPage />} />
       </Routes>
     </div>
