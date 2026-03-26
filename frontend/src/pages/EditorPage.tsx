@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -13,7 +13,7 @@ import {
 import { restrictToParentElement } from '@dnd-kit/modifiers'
 import {
   ArrowLeft, Save, Download, Settings, Layers, Square, Type, Image, Monitor, MessageSquare, Bell,
-  Trash2, Copy, Eye, EyeOff, Wand2, LayoutTemplate, ChevronUp, ChevronDown,
+  Trash2, Copy, Eye, EyeOff, Wand2, LayoutTemplate, ChevronUp, ChevronDown, Palette,
 } from 'lucide-react'
 import { api } from '../utils/api'
 
@@ -30,12 +30,26 @@ interface Element {
   is_visible: boolean
 }
 
+interface Theme {
+  id: string
+  name: string
+  color_primary: string
+  color_secondary: string
+  color_background: string
+  color_surface: string
+  color_text: string
+  color_text_muted: string
+  font_heading: string
+  font_body: string
+}
+
 interface Scene {
   id: string
   name: string
   background_color: string
   canvas_width: number
   canvas_height: number
+  theme_id: string | null
   elements: Element[]
 }
 
@@ -56,6 +70,7 @@ export default function EditorPage() {
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [showThemeModal, setShowThemeModal] = useState(false)
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
