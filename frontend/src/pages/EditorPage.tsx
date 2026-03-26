@@ -458,21 +458,59 @@ export default function EditorPage() {
     [updateElementMutation]
   )
 
+  const selectedElement = scene?.elements.find((e) => e.id === selectedElementId) || null
+  const currentTheme = themes?.find((t) => t.id === scene?.theme_id)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault()
+        if (!updateSceneMutation.isPending) {
+          updateSceneMutation.mutate({ layout_data: { version: '1.0', elements: scene?.elements || [] } })
+        }
+        return
+      }
+
+      // Delete to remove element
       if (e.key === 'Delete' && selectedElementId) {
         deleteElementMutation.mutate(selectedElementId)
       }
+
+      // Escape to deselect
       if (e.key === 'Escape') {
         setSelectedElementId(null)
+      }
+
+      // Arrow keys to move selected element
+      if (selectedElement && selectedElementId) {
+        const step = e.shiftKey ? 10 : 1
+        let updates: Partial<Element> = {}
+
+        switch (e.key) {
+          case 'ArrowUp':
+            updates = { position_y: Math.max(0, selectedElement.position_y - step) }
+            break
+          case 'ArrowDown':
+            updates = { position_y: Math.min((scene?.canvas_height || 1080) - selectedElement.height, selectedElement.position_y + step) }
+            break
+          case 'ArrowLeft':
+            updates = { position_x: Math.max(0, selectedElement.position_x - step) }
+            break
+          case 'ArrowRight':
+            updates = { position_x: Math.min((scene?.canvas_width || 1920) - selectedElement.width, selectedElement.position_x + step) }
+            break
+        }
+
+        if (updates.position_x !== undefined || updates.position_y !== undefined) {
+          e.preventDefault()
+          handleElementUpdate(selectedElement.id, updates)
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedElementId, deleteElementMutation])
-
-  const selectedElement = scene?.elements.find((e) => e.id === selectedElementId) || null
-  const currentTheme = themes?.find((t) => t.id === scene?.theme_id)
+  }, [selectedElementId, deleteElementMutation, updateSceneMutation, scene?.elements, selectedElement, scene?.canvas_height, scene?.canvas_width, handleElementUpdate])
 
   if (isLoading) {
     return (
