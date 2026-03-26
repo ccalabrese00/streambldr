@@ -1,7 +1,20 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
-import { ArrowLeft, Save, Download, Settings, Layers, Square, Type, Image, Monitor, MessageSquare, Bell } from 'lucide-react'
+import { useState, useCallback, useRef } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  DndContext,
+  useDraggable,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import { restrictToParentElement } from '@dnd-kit/modifiers'
+import {
+  ArrowLeft, Save, Download, Settings, Layers, Square, Type, Image, Monitor, MessageSquare, Bell,
+  Trash2, Copy, Eye, EyeOff, Wand2, LayoutTemplate, ChevronUp, ChevronDown,
+} from 'lucide-react'
 import { api } from '../utils/api'
 
 interface Element {
@@ -37,9 +50,17 @@ const ELEMENT_TYPES = [
 
 export default function EditorPage() {
   const { projectId, sceneId } = useParams<{ projectId: string; sceneId: string }>()
-  const navigate = useNavigate()
-  const [selectedElement, setSelectedElement] = useState<Element | null>(null)
+  const queryClient = useQueryClient()
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
   const [zoom, setZoom] = useState(0.5)
+  const [showTemplateModal, setShowTemplateModal] = useState(false)
+  const [showAIModal, setShowAIModal] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } })
+  )
 
   const { data: scene, isLoading } = useQuery({
     queryKey: ['scene', sceneId],
