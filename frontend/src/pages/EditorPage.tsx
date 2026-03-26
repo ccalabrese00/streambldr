@@ -66,6 +66,10 @@ interface Scene {
   canvas_height: number
   theme_id: string | null
   elements: Element[]
+  layout_data?: {
+    version: string
+    elements: Element[]
+  }
 }
 
 const ELEMENT_TYPES = [
@@ -573,7 +577,7 @@ export default function EditorPage() {
             </div>
 
             {selectedElement ? (
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-4 overflow-y-auto flex-1">
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Name</label>
                   <input
@@ -626,13 +630,283 @@ export default function EditorPage() {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <button onClick={() => handleElementUpdate(selectedElement.id, { z_index: selectedElement.z_index + 1 })} className="btn-secondary flex-1">
-                    <ChevronUp className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleElementUpdate(selectedElement.id, { z_index: Math.max(0, selectedElement.z_index - 1) })} className="btn-secondary flex-1">
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
+                {/* Text Element Styling */}
+                {selectedElement.element_type === 'text' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Content</label>
+                      <textarea
+                        value={selectedElement.properties.content || ''}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, content: e.target.value }
+                        })}
+                        className="input-field mt-1 h-20 resize-none"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase">Font Size</label>
+                        <input
+                          type="number"
+                          value={selectedElement.properties.font_size || 24}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, font_size: parseInt(e.target.value) || 24 }
+                          })}
+                          className="input-field mt-1"
+                          min={8}
+                          max={120}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase">Text Color</label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="color"
+                            value={selectedElement.properties.text_color || '#ffffff'}
+                            onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                              properties: { ...selectedElement.properties, text_color: e.target.value }
+                            })}
+                            className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                          />
+                          <input
+                            type="text"
+                            value={selectedElement.properties.text_color || '#ffffff'}
+                            onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                              properties: { ...selectedElement.properties, text_color: e.target.value }
+                            })}
+                            className="input-field flex-1 text-sm"
+                            placeholder="#ffffff"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Text Align</label>
+                      <div className="flex gap-1 mt-1">
+                        {['left', 'center', 'right'].map((align) => (
+                          <button
+                            key={align}
+                            onClick={() => handleElementUpdate(selectedElement.id, { 
+                              properties: { ...selectedElement.properties, text_align: align }
+                            })}
+                            className={`flex-1 py-2 rounded-lg text-sm capitalize ${
+                              selectedElement.properties.text_align === align 
+                                ? 'bg-indigo-600 text-white' 
+                                : 'bg-gray-100 hover:bg-gray-200'
+                            }`}
+                          >
+                            {align}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Font Weight</label>
+                      <select
+                        value={selectedElement.properties.font_weight || 'normal'}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, font_weight: e.target.value }
+                        })}
+                        className="input-field mt-1"
+                      >
+                        <option value="normal">Normal</option>
+                        <option value="bold">Bold</option>
+                        <option value="lighter">Light</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* Panel Element Styling */}
+                {selectedElement.element_type === 'panel' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Background Color</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="color"
+                          value={selectedElement.properties.background_color || '#2a2a2a'}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, background_color: e.target.value }
+                          })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                        />
+                        <input
+                          type="text"
+                          value={selectedElement.properties.background_color || '#2a2a2a'}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, background_color: e.target.value }
+                          })}
+                          className="input-field flex-1 text-sm"
+                          placeholder="#2a2a2a"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Border Radius</label>
+                      <input
+                        type="range"
+                        value={selectedElement.properties.border_radius || 0}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, border_radius: parseInt(e.target.value) }
+                        })}
+                        className="w-full mt-2"
+                        min={0}
+                        max={50}
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {selectedElement.properties.border_radius || 0}px
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Opacity</label>
+                      <input
+                        type="range"
+                        value={Math.round((selectedElement.properties.opacity ?? 1) * 100)}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, opacity: parseInt(e.target.value) / 100 }
+                        })}
+                        className="w-full mt-2"
+                        min={0}
+                        max={100}
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {Math.round((selectedElement.properties.opacity ?? 1) * 100)}%
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Webcam Element Styling */}
+                {selectedElement.element_type === 'webcam' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Border Color</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="color"
+                          value={selectedElement.properties.border_color || '#6366f1'}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, border_color: e.target.value }
+                          })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                        />
+                        <input
+                          type="text"
+                          value={selectedElement.properties.border_color || '#6366f1'}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, border_color: e.target.value }
+                          })}
+                          className="input-field flex-1 text-sm"
+                          placeholder="#6366f1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Border Width</label>
+                      <input
+                        type="range"
+                        value={selectedElement.properties.border_width || 2}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, border_width: parseInt(e.target.value) }
+                        })}
+                        className="w-full mt-2"
+                        min={0}
+                        max={20}
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {selectedElement.properties.border_width || 2}px
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Border Radius</label>
+                      <input
+                        type="range"
+                        value={selectedElement.properties.border_radius || 8}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, border_radius: parseInt(e.target.value) }
+                        })}
+                        className="w-full mt-2"
+                        min={0}
+                        max={50}
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {selectedElement.properties.border_radius || 8}px
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Chat Element Styling */}
+                {selectedElement.element_type === 'chat' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Background Color</label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="color"
+                          value={selectedElement.properties.background_color || '#1a1a1a'}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, background_color: e.target.value }
+                          })}
+                          className="w-8 h-8 rounded cursor-pointer border-0 p-0"
+                        />
+                        <input
+                          type="text"
+                          value={selectedElement.properties.background_color || '#1a1a1a'}
+                          onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                            properties: { ...selectedElement.properties, background_color: e.target.value }
+                          })}
+                          className="input-field flex-1 text-sm"
+                          placeholder="#1a1a1a"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Font Size</label>
+                      <input
+                        type="number"
+                        value={selectedElement.properties.font_size || 14}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, font_size: parseInt(e.target.value) || 14 }
+                        })}
+                        className="input-field mt-1"
+                        min={8}
+                        max={32}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 uppercase">Border Radius</label>
+                      <input
+                        type="range"
+                        value={selectedElement.properties.border_radius || 8}
+                        onChange={(e) => handleElementUpdate(selectedElement.id, { 
+                          properties: { ...selectedElement.properties, border_radius: parseInt(e.target.value) }
+                        })}
+                        className="w-full mt-2"
+                        min={0}
+                        max={50}
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {selectedElement.properties.border_radius || 8}px
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <div className="border-t pt-4 mt-4">
+                  <label className="text-xs font-medium text-gray-500 uppercase mb-2 block">Layer Order</label>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleElementUpdate(selectedElement.id, { z_index: selectedElement.z_index + 1 })} className="btn-secondary flex-1">
+                      <ChevronUp className="w-4 h-4 mr-1 inline" />
+                      Forward
+                    </button>
+                    <button onClick={() => handleElementUpdate(selectedElement.id, { z_index: Math.max(0, selectedElement.z_index - 1) })} className="btn-secondary flex-1">
+                      <ChevronDown className="w-4 h-4 mr-1 inline" />
+                      Back
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex gap-2 pt-2">
