@@ -15,6 +15,7 @@ import {
   ArrowLeft, Save, Download, Settings, Layers, Square, Type, Image, Monitor, MessageSquare, Bell,
   Trash2, Copy, Eye, EyeOff, Wand2, LayoutTemplate, ChevronUp, ChevronDown, Palette, Sparkles, FileJson,
 } from 'lucide-react'
+import html2canvas from 'html2canvas'
 import { api } from '../utils/api'
 
 interface Element {
@@ -234,6 +235,7 @@ export default function EditorPage() {
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+  const canvasRef = useRef<HTMLDivElement>(null)
   const [showThemeModal, setShowThemeModal] = useState(false)
   const [aiPrompt, setAiPrompt] = useState('')
   const [aiStyle, setAiStyle] = useState('futuristic')
@@ -355,11 +357,26 @@ export default function EditorPage() {
 
   const exportPNGMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.post(`/scenes/${sceneId}/export/png`, { scale: 1.0 })
-      return response.data
+      const canvasEl = canvasRef.current
+      if (!canvasEl) throw new Error('Canvas not found')
+
+      const canvas = await html2canvas(canvasEl, {
+        scale: 1,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: true,
+      })
+
+      const link = document.createElement('a')
+      link.download = `${scene?.name || 'scene'}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
     },
-    onSuccess: (data) => {
-      window.open(data.download_url, '_blank')
+    onSuccess: () => {
+      setShowExportModal(false)
+    },
+    onError: (error) => {
+      alert('Failed to export PNG: ' + error.message)
     },
   })
 
@@ -541,6 +558,7 @@ export default function EditorPage() {
           {/* Center - Canvas */}
           <div className="flex-1 flex items-center justify-center p-8 overflow-auto">
             <div
+              ref={canvasRef}
               className="relative shadow-2xl"
               style={{
                 width: scene.canvas_width * zoom,
